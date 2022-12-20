@@ -177,6 +177,104 @@ def simple_monospace_write_txt_on_img(img, lines, font, txt_color):
         
     return img
 
+def get_crop_coords_from_border_size_d(img, border_size_d):
+    """
+        Gets coords for cropping out border with output of _get_color_border_size_d_fast__if_exists()
+        - w: Width of the output video (out_w). It defaults to iw. This expression is evaluated only once during the filter configuration.
+        - h: Height of the output video (out_h). It defaults to ih. This expression is evaluated only once during the filter configuration.
+        - x: Horizontal position, in the input video, of the left edge of the output video. It defaults to (in_w-out_w)/2. This expression is evaluated per-frame.
+        - y: Vertical position, in the input video, of the top edge of the output video. It defaults to (in_h-out_h)/2. This expression is evaluated per-frame.
+    """
+    print(f"in _get_crop_coords_from_border_size_d() - {img.size=}")
+    w = img.width - border_size_d["left"] - border_size_d["right"]
+    h = img.height - border_size_d["top"] - border_size_d["bottom"]
+    x = border_size_d["left"]
+    y = border_size_d["top"]
+    return w,h,x,y
+
+
+
+def get_color_border_size_d_fast__if_exists(img, color_rgb, ret_false_if_no_border = True):
+    """
+        Returns dict of # pixel size of color border of each size.
+        - Does this fast by checking individual lines to find min border instead of each individual pixel.
+            - B/c of this, false positives possible, change _get_const_y_pos_l() to adjust if needed
+        - Focused on returning False in the case there is no border ASAP
+        - If ret_false_if_no_border == False, will just return normal border_size_d with all values = 0
+    """
+
+    def _get_const_y_pos_l(img_h):
+        """ If too many errors, add more/different y_pos"""
+        return [
+                int(img_h * 0.25),
+                int(img_h * 0.50),
+                int(img_h * 0.75)
+            ]
+
+    def _get_horz_num_pixels_until_not_color_multiple_lines(img, y_pos_l, color_rgb):
+
+        def _get_horz_num_pixels_until_not_color_single_line(img, y_pos, color_rgb):
+            print("in {_get_horz_num_pixels_until_not_color_single_line()} {y_pos=}")
+            img_w, img_h = img.size
+
+            if y_pos < 0 or y_pos > img_h:
+                raise Exception(f"Error: Invalid y_pos ({y_pos=}) for given img dimensions: {img_w=}, {img_h=}")
+
+            # Could make more efficient with binary search, skipping given num pixels, etc.
+            for x in range(img_w):
+                if img.getpixel((x,y_pos)) != color_rgb:
+                    print("Returning: ", (x,y_pos), x)
+                    return x
+
+
+        min_num_pixels_until_not_color = None
+
+        for y_pos in y_pos_l:
+            num_pixels_until_not_color = _get_horz_num_pixels_until_not_color_single_line(img, y_pos, color_rgb)
+
+            # If ever find spot with no border, means edge has no border so no need to check other y_pos'
+            if num_pixels_until_not_color == 0:
+                return 0
+
+            if min_num_pixels_until_not_color == None:
+                min_num_pixels_until_not_color = num_pixels_until_not_color
+
+            # If not giving good results, maybe should add a check to require a given # of matches?
+            min_num_pixels_until_not_color = min(min_num_pixels_until_not_color, num_pixels_until_not_color)
+            print(f"....{min_num_pixels_until_not_color=}")
+        return min_num_pixels_until_not_color
+
+        # If get to end of img, means line of color_rgb goes all the way across
+        return  # TODO should this be removed?>>>>>>>?>>>>?????
+
+
+    border_size_d = {"left"  : 0,
+                    "bottom" : 0,
+                    "right"  : 0,
+                    "top"    : 0}
+
+    # Set what happens if no color border is found
+    if ret_false_if_no_border:
+        ret_on_no_border = False
+    else:
+        ret_on_no_border = border_size_d
+
+    # If corners of img is not given color, must not have border of given color
+    if  img.getpixel((0,0)) != 0 or \
+        img.getpixel((img.width - 1, img.height - 1)) != 0:
+        return ret_on_no_border
+
+    border_size_d["left"]   = _get_horz_num_pixels_until_not_color_multiple_lines(img                         , _get_const_y_pos_l(img.height), color_rgb)
+    border_size_d["top"]    = _get_horz_num_pixels_until_not_color_multiple_lines(img.rotate(90,  expand=True), _get_const_y_pos_l(img.width ), color_rgb)
+    border_size_d["right"]  = _get_horz_num_pixels_until_not_color_multiple_lines(img.rotate(180, expand=True), _get_const_y_pos_l(img.height), color_rgb)
+    border_size_d["bottom"] = _get_horz_num_pixels_until_not_color_multiple_lines(img.rotate(270, expand=True), _get_const_y_pos_l(img.width ), color_rgb)
+
+    # ret_on_no_border if all sides 0
+    for size in border_size_d.values():
+        if size != 0:
+            return border_size_d
+    return ret_on_no_border
+
 
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
