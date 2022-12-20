@@ -6,12 +6,6 @@ import PIL.ImageOps
 
 import numpy as np
 
-
-
-
-
-
-
 # vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv
 #
 # Uses Direct PIL import
@@ -243,10 +237,6 @@ def get_color_border_size_d_fast__if_exists(img, color_rgb, ret_false_if_no_bord
             min_num_pixels_until_not_color = min(min_num_pixels_until_not_color, num_pixels_until_not_color)
             print(f"....{min_num_pixels_until_not_color=}")
         return min_num_pixels_until_not_color
-
-        # If get to end of img, means line of color_rgb goes all the way across
-        return  # TODO should this be removed?>>>>>>>?>>>>?????
-
 
     border_size_d = {"left"  : 0,
                     "bottom" : 0,
