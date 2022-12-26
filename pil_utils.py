@@ -295,10 +295,16 @@ def trim_border_by_path(in_img_path, out_img_path):
     edit_img_by_path(trim_border, None, in_img_path, out_img_path)
 
 
-
 if __name__ == '__main__':
     print('in pil_utils main...')
-    trim_border_by_path("C:\\Users\\Brandon\\Documents\\Personal_Projects\\g_card_tools\\code_card\\barcode.png", "C:\\Users\\Brandon\\Documents\\Personal_Projects\\g_card_tools\\code_card\\barcode_trimmed_border.png")
+    img = Image.open("C:\\Users\\Brandon\\Documents\\Personal_Projects\\tik_tb_vid_big_data\\ignore\\test_img.jpg")
+
+    border_size_d = get_color_border_size_d_fast__if_exists(img, color_rgb=0, ret_false_if_no_border = True)
+
+    get_crop_coords_from_border_size_d(img, border_size_d)
+
+
+    # trim_border_by_path("C:\\Users\\Brandon\\Documents\\Personal_Projects\\g_card_tools\\code_card\\barcode.png", "C:\\Users\\Brandon\\Documents\\Personal_Projects\\g_card_tools\\code_card\\barcode_trimmed_border.png")
 
 # #     in_img_path = "C:\\Users\\Brandon\\Documents\\Personal_Projects\\white_paper_art_big_data\\white_paper_graphs\\pordh4hewmc01.jpg"
 # #     out_img_path = "C:\\Users\\Brandon\\Documents\\Personal_Projects\\white_paper_art_big_data\\white_paper_graphs\\pordh4hewmc01_border.jpg"
